@@ -1,0 +1,74 @@
+---
+drake_cache: '.server'
+---
+
+```{r makecondition}
+library(ggplot2)
+library(readr)
+library(plotly)
+library(shiny)
+library(DT)
+library(dplyr)
+library(leaflet)
+
+NTP_map <- readRDS("support/ntp_map.Rds")
+mapdata <- readRDS("support/mapdata.Rds")
+
+```
+
+```{r}
+library(dplyr)
+appSystem <- get_currentRmd()
+appSystem <- check_yaml(appSystem)
+appSystem %>%
+  check_Rproject()
+```
+
+
+
+
+## Input 
+
+```{r makecondition_input}
+input_pickDate = as.Date("2021-04-26")
+
+```
+
+## Output rendering
+
+  * must have `render_outputId` and `output_outputId` objects.
+  
+  * `render_outputId` has render function as its value, which will be used to generate proper server.R
+
+```{r}
+render_ntp <- shiny::renderPlot()
+```
+
+```{r output_ntp}
+output_ntp <- plotly::renderPlotly({
+  plotly::plot_ly()%>%
+  plotly::add_sf(
+    data=mapdata,
+    name=~name,
+    showlegend=FALSE,
+    stroke=I("#720017"),
+    color=I("#D8D583")
+  )
+  
+  
+})
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,114 @@
+---
+title: "map"
+output: html_document
+---
+
+
+```{r makecondition}
+library(dplyr)
+library(htmltools)
+library(econR)
+library(osmdata)
+library(plotly)
+library(lubridate)
+library(ggplot2)
+library(magrittr)
+library(xml2)
+library(readr)
+library(sf)
+
+
+data <- read_csv("support/\u65b0\u5317\u78ba\u8a3a\u500b\u6848\u7d93\u7def\u5ea6.csv")
+
+
+```
+
+
+```{r bb_ntp}
+osmdata::getbb("新北市") -> bb_ntp
+```
+
+```{r sf_unnamed_ntp}
+bb_ntp%>%
+  osmdata::opq() %>%
+  osmdata::add_osm_feature(
+    key="admin_level",
+    value="5"
+    ) %>%
+  osmdata::osmdata_sf() -> sf_ntp
+
+
+sf_ntp %>%
+  osmdata::unname_osmdata_sf() -> 
+  sf_unnamed_ntp
+
+sf_unnamed_ntp$osm_multipolygons <- subset(sf_unnamed_ntp$osm_multipolygons,sf_unnamed_ntp$osm_multipolygons$name%in%c("萬里區","金山區","板橋區","汐止區","深坑區","石碇區","瑞芳區","平溪區","雙溪區","貢寮區","新店區","坪林區","烏來區","永和區","中和區","土城區","三峽區","樹林區","鶯歌區","三重區","新莊區","泰山區","林口區","蘆洲區","五股區","八里區","淡水區","三芝區","石門區"))
+
+```
+
+```{r}
+ntp_map <- {
+  plotly::plot_ly() %>%
+  plotly::add_sf(
+    data=sf_unnamed_ntp$osm_multipolygons,
+    name=~name,
+    showlegend=FALSE,
+    stroke=I("#720017"),
+    color=I("#D8D583")
+  )
+}
+
+
+```
+
+
+```{r}
+ntp_map %>% 
+  htmlwidgets::onRender(
+    jsCode =change
+  ) -> ntp_mapConsoleLog
+```
+
+```{r change}
+change <- "function(map){
+plt_widget = map;console.log(map);
+plt_widget.on(\"plotly_hover\",function(e){
+event_data=e;
+console.log(e)});
+plt_widget.on(\"plotly_click\",function(e){
+$place.text(event_data.points[0].fullData.name)
+});}"
+```
+
+
+```{r save}
+saveRDS(ntp_mapConsoleLog,file = "~/Documents/GitHub/covid19/support/ntp_map.Rds")
+```
+
+```{r}
+data <- read.csv(file = "~/Documents/GitHub/covid-19/support/新北確診個案經緯度.csv")
+
+
+saveRDS(data,file = "~/Documents/GitHub/covid19/support/data.Rds")
+```
+
+
+```{r}
+try <- {ntp_mapConsoleLog%>%
+    add_markers(
+  data = data,
+  x=~lon,
+  y=~lat,
+  size=2,
+  color=I("#720017"))}
+
+try
+```
+
+
+
+
+
+
+
+
